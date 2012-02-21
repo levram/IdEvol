@@ -1,14 +1,24 @@
 <!DOCTYPE html>
 <script type="text/javascript" src="./knockout-2.0.0.js"></script>
-<script type="text/javascript" src="./jquery-1.7.1.min.js"></script>
+<!--<script type="text/javascript" src="./jquery-1.7.1.min.js"></script>-->
 <style type="text/css">
+#container {
+  border: 1px solid gray;
+  width: 500px;
+  height: 500px;
+  overflow: hidden;
+  position: absolute;
+  margin: 20px;
+  /*padding: 20px;*/
+}
 .agent {
+  position: absolute;
   /*background-c  olor: red;*/
   /*display: block;*/
   /*width: 100px;*/
   /*height: 100px;*/
   border: 2px solid black;
-  margin: 5px auto;
+  /*margin: 5px auto;*/
   border-radius: 9999px;
   /*position:absolute*/
 }
@@ -24,8 +34,8 @@ ko foreach: agents
 <g data-bind="foreach: agents">
 </g>
 </svg> -->
-<div data-bind="foreach: agents">
-<div class="agent" data-bind="style: {width:(energy()/2)+'px', height:(energy()/2)+'px', backgroundColor: 'hsl('+identity()*3.6+',100%,'+intelligence()+'%)'}"></div>
+<div id="container" data-bind="foreach: agents">
+<div class="agent" data-bind="attr: {title: ko.toJSON($data)}, style: {top:500-5*intelligence()+'px', left:5*identity()+'px', width:(energy()/2)+'px', height:(energy()/2)+'px', backgroundColor: 'hsl('+identity()*3.3+',90%,'+(20+intelligence()*0.7)+'%)'}"></div>
 </div>
 
 <!-- 
@@ -43,8 +53,8 @@ var agentModel = function(opts) {
   if (typeof opts != 'object') {opts = {}}
   var o = 
     { energy: nrnd(80, 20)
-    , intelligence: nrnd(50, 50)
-    , identity: nrnd(40, 30)
+    , intelligence: nrnd(50, 60)
+    , identity: nrnd(50, 60)
     , observed: []
     }
   for (var key in o) if (o.hasOwnProperty(key)) {
@@ -53,12 +63,16 @@ var agentModel = function(opts) {
   for (var key in opts) if (opts.hasOwnProperty(key)) {
     opts[key] = ko.observable(opts[key])
   }
+  opts.toString = function() {
+    console.log(this);
+    return JSON.stringify(this);
+  }
   return opts
 }
 
 var agents = ko.observableArray([])
-for (var i = 0; i < 10; i++) {
-  agents.push(new agentModel({x:0, y:i}))
+for (var i = 0; i < 300; i++) {
+  agents.push(new agentModel({x:0, y:i*10}))
 }
 ko.applyBindings({agents:agents})
 // ko.applyBindings(agents[1x])
