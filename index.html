@@ -2,49 +2,63 @@
 <script type="text/javascript" src="./knockout-2.0.0.js"></script>
 <!--<script type="text/javascript" src="./jquery-1.7.1.min.js"></script>-->
 <style type="text/css">
-#container {
+.container {
   border: 1px solid gray;
-  width: 500px;
-  height: 500px;
+  width: 600px;
+  height: 600px;
   overflow: hidden;
-  position: absolute;
+  position: relative;
   margin: 20px;
-  /*padding: 20px;*/
 }
 .agent {
+  /*padding: 10px;*/
+  /*margin: auto auto;*/
+  text-align: center;
   position: absolute;
-  /*background-c  olor: red;*/
-  /*display: block;*/
-  /*width: 100px;*/
-  /*height: 100px;*/
   border: 2px solid black;
-  /*margin: 5px auto;*/
   border-radius: 9999px;
-  /*position:absolute*/
 }
 </style>
-<!-- <script type="text/javascript" src="./fabric.min.js"></script> -->
-<!-- <svg xmlns="http://www.w3.org/2000/svg" height="70" width="80"><g transform="translate(0,-982)"><rect ry="10" height="35" width="70" stroke="#000" y="990" x="5"/><text y="1020" x="8" font-family="Trebuchet MS" fill="#F00"><tspan data-bind="text: asd" font-size="28px">tree</tspan><tspan font-size="14px">js</tspan></text></g></svg> -->
-<!-- 
-<svg xmlns="http://www.w3.org/2000/svg" height="800" width="800">
-<circle cx="100" cy="100" r="50" fill="red" stroke="#000" stroke-width="2"/>
-ko foreach: agents
-<circle xmlns="http://www.w3.org/2000/svg" data-bind="attr: {cx:100+x(), cy:100+y()*50, r:(energy()/2)}" fill="red" stroke="#000" stroke-width="2"></circle>
-<!-- /ko --
-<g data-bind="foreach: agents">
-</g>
-</svg> -->
-<div id="container" data-bind="foreach: agents">
-<div class="agent" data-bind="attr: {title: ko.toJSON($data)}, style: {top:500-5*intelligence()+'px', left:5*identity()+'px', width:(energy()/2)+'px', height:(energy()/2)+'px', backgroundColor: 'hsl('+identity()*3.3+',90%,'+(20+intelligence()*0.7)+'%)'}"></div>
+<div class="container" data-bind="text:'Objective reality', foreach: agents">
+  <div class="agent" data-bind="
+    { attr: {title: ko.toJSON($data)}
+    , text: name
+    , style:
+      { top: 525-intelligence()*5 + 'px'
+      , left: 25+identity()*5 + 'px'
+      , width: (energy()/2) + 'px'
+      , height: (energy()/2) + 'px'
+      , backgroundColor: 'hsl('+identity()*3.3+',90%,'+(20+intelligence()*0.7)+'%)'
+      }
+    }
+  "></div>
+</div>
+<div data-bind="foreach: agents">
+  <div class="container" data-bind="text: 'Inner observations of '+name(), foreach: observed">
+    <div class="agent" data-bind="
+      { attr: {title: ko.toJSON($data)}
+      , text: name
+      , style:
+        { top: 525-intelligence()*5 + 'px'
+        , left: 25+identity()*5 + 'px'
+        , width: (energy()/2) + 'px'
+        , height: (energy()/2) + 'px'
+        , backgroundColor: 'hsl('+identity()*3.3+',90%,'+(20+intelligence()*0.7)+'%)'
+        }
+      }
+    "></div>
+  </div>
 </div>
 
-<!-- 
-<canvas id="c" width="500" height="500"></canvas>
- -->
-
-<!-- <div data-bind="style: {color: 'hsl('+asd()+',100%,50%)'}"> -->
 <script type="text/javascript">
-
+var vA = // viewAdapter
+  { toY: function(value) {
+      return (500-value*5) + 'px'
+    }
+  , toX: function(v) {
+      return (5*v)+'px'
+    }
+  }
 var nrnd = function(avg, dist) {
   return Math.round(avg-dist+(Math.random()*dist*2))
 }
@@ -52,86 +66,26 @@ var nrnd = function(avg, dist) {
 var agentModel = function(opts) {
   if (typeof opts != 'object') {opts = {}}
   var o = 
-    { energy: nrnd(80, 20)
-    , intelligence: nrnd(50, 60)
-    , identity: nrnd(50, 60)
-    , observed: []
-    }
-  for (var key in o) if (o.hasOwnProperty(key)) {
-    opts[key] = o[key]
+    { energy: ko.observable(nrnd(80, 20))
+    , intelligence: ko.observable(nrnd(50, 50))
+    , identity: ko.observable(nrnd(50, 50))
+    , observed: ko.observableArray([])
   }
   for (var key in opts) if (opts.hasOwnProperty(key)) {
     opts[key] = ko.observable(opts[key])
   }
+  for (var key in o) if (o.hasOwnProperty(key)) {
+    opts[key] = o[key]
+  }
   opts.toString = function() {
-    console.log(this);
     return JSON.stringify(this);
   }
   return opts
 }
 
 var agents = ko.observableArray([])
-for (var i = 0; i < 300; i++) {
-  agents.push(new agentModel({x:0, y:i*10}))
+for (var i = 0; i < 10; i++) {
+  agents.push(new agentModel({x:0, y:i*10, name:i}))
 }
 ko.applyBindings({agents:agents})
-// ko.applyBindings(agents[1x])
-// console.log(agents)
-
-// function makeCircle(left, top, line1, line2, line3, line4) {
-//   var c = new fabric.Circle({
-//     left: left,
-//     top: top,
-//     strokeWidth: 5,
-//     radius: 12,
-//     fill: '#fff',
-//     stroke: '#666'
-//   });
-//   c.hasControls = c.hasBorders = false;
-
-//   c.line1 = line1;
-//   c.line2 = line2;
-//   c.line3 = line3;
-//   c.line4 = line4;
-
-//   return c;
-// }
-
-// function makeLine(coords) {
-//   return new fabric.Line(coords, {
-//     fill: 'red',
-//     strokeWidth: 5,
-//     selectable: false
-//   });
-// }
-
-// var canvas = new fabric.Canvas('c', { selection: false });
-
-// var line = makeLine([ 250, 125, 250, 175 ]),
-//     line2 = makeLine([ 250, 175, 250, 250 ]),
-//     line3 = makeLine([ 250, 250, 300, 350]),
-//     line4 = makeLine([ 250, 250, 200, 350]),
-//     line5 = makeLine([ 250, 175, 175, 225 ]),
-//     line6 = makeLine([ 250, 175, 325, 225 ]);
-
-// canvas.add(line, line2, line3, line4, line5, line6);
-
-// canvas.add(
-//   makeCircle(line.get('x1'), line.get('y1'), null, line),
-//   makeCircle(line.get('x2'), line.get('y2'), line, line2, line5, line6),
-//   makeCircle(line2.get('x2'), line2.get('y2'), line2, line3, line4),
-//   makeCircle(line3.get('x2'), line3.get('y2'), line3),
-//   makeCircle(line4.get('x2'), line3.get('y2'), line4),
-//   makeCircle(line5.get('x2'), line5.get('y2'), line5),
-//   makeCircle(line6.get('x2'), line6.get('y2'), line6)
-// );
-
-// canvas.observe('object:moving', function(e) {
-//   var p = e.memo.target;
-//   p.line1 && p.line1.set({ 'x2': p.left, 'y2': p.top });
-//   p.line2 && p.line2.set({ 'x1': p.left, 'y1': p.top });
-//   p.line3 && p.line3.set({ 'x1': p.left, 'y1': p.top });
-//   p.line4 && p.line4.set({ 'x1': p.left, 'y1': p.top });
-//   canvas.renderAll();
-// });
 </script>
