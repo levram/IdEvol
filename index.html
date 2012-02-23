@@ -3,6 +3,7 @@
 <head>
   <title>IdEvol</title>
   <script type="text/javascript" src="./knockout-2.0.0.js"></script>
+  <script type="text/javascript" src="./underscore-min.js"></script>
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
   <style type="text/css">
   body {
@@ -79,8 +80,12 @@
   </div>
   <script type="text/html" id="agent-template">
     <div class="agent" data-bind="
-      { attr: {title: ko.toJSON($data)}
-      , text: $data.name()
+      { text: $data.name()
+      , click: function() {
+          console.log(ko.toJSON($data.agent))
+          $('.agent').css('z-index', 0)
+          $(event.target).css('z-index', 1)
+        }
       , style:
         { top: 100-$data.top() + '%'
         , left: $data.left() + '%'
@@ -111,25 +116,51 @@
       , intelligence: ko.observable(nrnd(60, 30))
       , identity: ko.observable(nrnd(40, 30))
       , observed: ko.observableArray([])
+      , live: function() {
+          // setIntervallal hivogatja az act-et
+          this.act()
+          return this
+        }
+      , act: function() {
+          this.observe()
+          // this._heartBeat = setTimeout(this.act.bind(this), 100)
+          // később interact-ot is hívhat
+        }
+      , observe: function() {
+          // kiválasztja, hogy ismert vagy ismeretlent akar observálni
+          var targetName = null
+
+          var observation = World.observation(this, targetName)
+          // this.observed[observation.name] = observation
+          // console.log(observation)
+          // debugger
+          this.observed.push(observation)
+          // az eredményt eltárolja
+        }
+      , activate: function() {
+          // kiválasztja, hogy kit akar activate-elni
+          var receiver = "..."
+          World.interaction(this, receiver)
+        }
+      , receive: function(activator) {   
+          // a World.interaction hívja
+          this.observe(activator)
+          // eldönti a receiver, hogy akar-e menekülni
+        }
+      , die: function() {
+          // leállítja az interval-t
+        }
     }
     for (var key in opts) if (opts.hasOwnProperty(key)) {
       opts[key] = ko.observable(opts[key])
     }
-    for (var key in o) if (o.hasOwnProperty(key)) {
-      opts[key] = o[key]
-    }
-    opts.toString = function() {
-      return JSON.stringify(this);
-    }
-    return opts
+    _(o).extend(opts)
+    return o
   }
   
-  var agents = ko.observableArray([])
-  var agentCount = 12;
-  for (var i = 0; i < agentCount; i++) {
-    agents.push(new agentModel({x: 0, y: i*100/(agentCount-1), name: i}))
-  }
+
   
+  /*
   var testObserved = function() {
     var observedAgents = ko.observableArray([])
     for (var i = 0; i < agents().length; i++) {
@@ -147,12 +178,38 @@
     }
   }
   testObserved();
-  
-  ko.applyBindings({agents:agents})
-  $('.agent').click(function (event) {
-    $('.agent').css('z-index', 0);
-    $(event.target).css('z-index', 1);
-    return false;
-  });
+  */
+    
+  var World =
+    { create: function(agentCount) {
+        //létrehozza az agent-eket, meghhivja rájuk a live-ot
+        for (var i = 0; i < agentCount; i++) {
+          this.agents.push(new agentModel({x: 0, y: i*100/(agentCount-1), name: i}).live())
+        }
+        // this.agents()[0].live()
+      }
+    , destroy: function() {
+        // minden agent-et die-oltat
+      }
+    , observation: function(observer, receiverName) {
+        // ha az observee null, akkor egy ismeretlen agent-et obszervál az observer
+        // az observer.intelligence-től függ az observálás hibája
+        if (!receiverName) {
+          var candidate = _({}).extend(this.agents()[Math.floor(Math.random()*this.agents().length)])
+          delete candidate.observed
+        } else {
+          
+        }
+        return candidate
+      }
+    , interaction: function(activator, receiver) {
+        var wantToEscape = receiver.receive(activator)
+        // vagy sikerül vagy nem a menekülés
+        // módosítja az activator és a receiver tulajdonságait
+      }
+    , agents: ko.observableArray([])
+    }
+  World.create(12)
+  ko.applyBindings(World)
   </script>
 </body>
