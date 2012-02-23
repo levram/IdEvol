@@ -99,14 +99,18 @@
   </script>
   
   <script type="text/javascript">
-  var nrndOld = function (avg, dist) {
-    return Math.round(avg - dist + (Math.random() * dist * 2))
-  }
   var nrnd = function (avg, dist) {    
     // see: http://www.sinc.stonybrook.edu/Stu/nwellcom/ams570/js_normal/
     // r is a random number with mean 0, mostly between -4 and 4
     var r = Math.sqrt(-2 * Math.log(Math.random())) * Math.cos(2 * Math.PI * Math.random())
     return avg + r * dist / 4
+  }
+  ko.observableHash = function(o) {
+    // TODO skip functions, use observableArray for arrays
+    for (var key in o) if (o.hasOwnProperty(key)) {
+      o[key] = ko.observable(o[key])
+    }
+    return o
   }
   
   var agentModel = function (opts) {
@@ -117,93 +121,66 @@
       , identity: ko.observable(nrnd(40, 30))
       , observed: ko.observableArray([])
       , live: function() {
-          // setIntervallal hivogatja az act-et
-          this.act()
+          this._heartBeat = setTimeout(this.act.bind(this), 100)
           return this
         }
       , act: function() {
           this.observe()
-          // this._heartBeat = setTimeout(this.act.bind(this), 100)
-          // később interact-ot is hívhat
+          this._heartBeat = setTimeout(this.act.bind(this), 100)
+          // TODO később interact-ot is hívhat
         }
       , observe: function() {
-          // kiválasztja, hogy ismert vagy ismeretlent akar observálni
+          // TODO kiválasztja, hogy ismert vagy ismeretlent akar observálni
           var targetName = null
-
           var observation = World.observation(this, targetName)
-          // this.observed[observation.name] = observation
-          // console.log(observation)
-          // debugger
+          this.observed.remove(function(value) { return value.name() === observation.name() })
           this.observed.push(observation)
-          // az eredményt eltárolja
         }
       , activate: function() {
-          // kiválasztja, hogy kit akar activate-elni
+          // TODO kiválasztja, hogy kit akar activate-elni
           var receiver = "..."
           World.interaction(this, receiver)
         }
-      , receive: function(activator) {   
-          // a World.interaction hívja
+      , receive: function(activator) {
           this.observe(activator)
-          // eldönti a receiver, hogy akar-e menekülni
+          // TODO eldönti a receiver, hogy akar-e menekülni
         }
       , die: function() {
-          // leállítja az interval-t
+          // TODO leállítja az interval-t
         }
     }
-    for (var key in opts) if (opts.hasOwnProperty(key)) {
-      opts[key] = ko.observable(opts[key])
-    }
+    ko.observableHash(opts)
     _(o).extend(opts)
     return o
   }
   
-
-  
-  /*
-  var testObserved = function() {
-    var observedAgents = ko.observableArray([])
-    for (var i = 0; i < agents().length; i++) {
-      observedAgents.push(
-        { name: agents()[i].name
-        , x: agents()[i].x
-        , y: agents()[i].y
-        , energy: agents()[i].energy
-        , intelligence: agents()[i].intelligence
-        , identity: agents()[i].identity
-      });
-    }
-    for (var i = 0; i < agents().length; i++) {
-      agents()[i].observed = observedAgents
-    }
-  }
-  testObserved();
-  */
-    
   var World =
     { create: function(agentCount) {
-        //létrehozza az agent-eket, meghhivja rájuk a live-ot
         for (var i = 0; i < agentCount; i++) {
           this.agents.push(new agentModel({x: 0, y: i*100/(agentCount-1), name: i}).live())
         }
-        // this.agents()[0].live()
       }
     , destroy: function() {
-        // minden agent-et die-oltat
+        // TODO minden agent-et die-oltat
       }
     , observation: function(observer, receiverName) {
-        // ha az observee null, akkor egy ismeretlen agent-et obszervál az observer
-        // az observer.intelligence-től függ az observálás hibája
-        if (!receiverName) {
-          var candidate = _({}).extend(this.agents()[Math.floor(Math.random()*this.agents().length)])
-          delete candidate.observed
-        } else {
-          
+        receiverName = receiverName || Math.floor(Math.random()*this.agents().length)
+        //var receiver = _({}).extend(this.agents()[receiverName])
+        //delete receiver.observed
+        var receiver = this.agents()[receiverName]
+        var observedReceiver =
+          { name: receiver.name
+          , x: nrnd(receiver.x(), 25-observer.intelligence()/4)
+          , y: nrnd(receiver.y(), 25-observer.intelligence()/4)
+          , energy: nrnd(receiver.energy(), 25-observer.intelligence()/4)
+          , intelligence: nrnd(receiver.intelligence(), 25-observer.intelligence()/4)
+          , identity: nrnd(receiver.identity(), 25-observer.intelligence()/4)
         }
-        return candidate
+        return ko.observableHash(observedReceiver) 
       }
     , interaction: function(activator, receiver) {
-        var wantToEscape = receiver.receive(activator)
+        // TODO
+        // var wantToEscape = receiver.receive(activator)
         // vagy sikerül vagy nem a menekülés
         // módosítja az activator és a receiver tulajdonságait
       }
