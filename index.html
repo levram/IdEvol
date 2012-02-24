@@ -121,7 +121,7 @@
       , identity: ko.observable(nrnd(40, 30))
       , observed: ko.observableArray([])
       , live: function() {
-          this._heartBeat = setTimeout(this.act.bind(this), 100)
+          this.act()
           return this
         }
       , act: function() {
@@ -133,8 +133,10 @@
           // TODO kiválasztja, hogy ismert vagy ismeretlent akar observálni
           var targetName = null
           var observation = World.observation(this, targetName)
-          this.observed.remove(function(value) { return value.name() === observation.name() })
-          this.observed.push(observation)
+          if (observation) {
+            this.observed.remove(function(value) { return value.name() === observation.name() })
+            this.observed.push(observation)
+          }
         }
       , activate: function() {
           // TODO kiválasztja, hogy kit akar activate-elni
@@ -164,6 +166,9 @@
         // TODO minden agent-et die-oltat
       }
     , observation: function(observer, receiverName) {
+        if (!this.agents().length) {
+          return null
+        }
         receiverName = receiverName || Math.floor(Math.random()*this.agents().length)
         //var receiver = _({}).extend(this.agents()[receiverName])
         //delete receiver.observed
